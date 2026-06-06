@@ -1,0 +1,23 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# IDEs
+.idea/
+.vscode/
+
+# Project configuration and local environments
+.env
+tests/
+wrangler.toml
+worker.py

@@ -1,0 +1,17 @@
+# wrangler.toml
+# Configuration for deploying the Mental Wellness Tracker FastAPI app to Cloudflare Workers.
+
+name = "mental-wellness-tracker"
+main = "worker.py"
+compatibility_date = "2024-04-05"
+compatibility_flags = ["python_workers"]
+
+[vars]
+APP_ENV = "production"
+APP_NAME = "Mental Wellness Tracker"
+DEBUG = "false"
+ALLOWED_ORIGINS = "*"
+
+# NOTE: Sensitive keys such as ANTHROPIC_API_KEY must not be placed here in plaintext.
+# Set them using the Wrangler CLI:
+#   $ wrangler secret put ANTHROPIC_API_KEY

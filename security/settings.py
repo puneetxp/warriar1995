@@ -61,7 +61,58 @@ class Settings(BaseSettings):
         return bool(self.ANTHROPIC_API_KEY and len(self.ANTHROPIC_API_KEY) > 10)
 
 
+import os
+
+
 @lru_cache()
 def get_settings() -> Settings:
     """Return cached settings singleton."""
     return Settings()
+
+
+def reload_settings_from_env(env_obj) -> Settings:
+    """Update settings in place using keys from an environment object or dict."""
+    settings = get_settings()
+    
+    if env_obj is not None:
+        keys = env_obj.keys() if isinstance(env_obj, dict) else dir(env_obj)
+        for key in keys:
+            if key.startswith("_"):
+                continue
+            val = env_obj[key] if isinstance(env_obj, dict) else getattr(env_obj, key)
+            if hasattr(settings, key):
+                field_type = type(settings).model_fields[key].annotation
+                try:
+                    # Handle basic conversions (e.g. lists, bools)
+                    if field_type == bool:
+                        if isinstance(val, str):
+                            casted_val = val.lower() in ("true", "1", "yes")
+                        else:
+                            casted_val = bool(val)
+                    elif field_type == list or getattr(field_type, "__origin__", None) == list:
+                        if isinstance(val, str):
+                            val_str = val.strip()
+                            if val_str.startswith("[") and val_str.endswith("]"):
+                                import json
+                                casted_val = json.loads(val_str)
+                            else:
+                                casted_val = [item.strip() for item in val_str.split(",") if item.strip()]
+                        else:
+                            casted_val = list(val)
+                    elif field_type == int:
+                        casted_val = int(val)
+                    elif field_type == float:
+                        casted_val = float(val)
+                    else:
+                        casted_val = str(val)
+                    setattr(settings, key, casted_val)
+                except Exception:
+                    setattr(settings, key, val)
+                
+                # Also set in os.environ so other libraries (like langchain) can read it
+                os.environ[key] = str(val)
+            elif key == "ANTHROPIC_API_KEY":
+                # Ensure ANTHROPIC_API_KEY is placed in os.environ even if not explicitly defined on settings
+                os.environ[key] = str(val)
+    return settings
+
