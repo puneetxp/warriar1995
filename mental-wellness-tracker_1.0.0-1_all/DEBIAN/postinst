@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+APP_DIR="/usr/share/mental-wellness-tracker"
+USER_NAME="wellness-tracker"
+
+# Create system user for the service if not exists
+if ! id -u "$USER_NAME" >/dev/null 2>&1; then
+    useradd --system --shell /bin/false --user-group "$USER_NAME"
+fi
+
+echo "Setting up Python virtual environment..."
+PYTHON_CMD="python3"
+if [ -x "/usr/local/bin/python3.14" ]; then
+    PYTHON_CMD="/usr/local/bin/python3.14"
+elif command -v python3.14 &> /dev/null; then
+    PYTHON_CMD="python3.14"
+elif command -v python3.13 &> /dev/null; then
+    PYTHON_CMD="python3.13"
+fi
+echo "Using Python: $PYTHON_CMD"
+
+$PYTHON_CMD -m venv "$APP_DIR/venv314"
+echo "Downloading and installing python dependencies from requirements.txt (this may take a minute)..."
+"$APP_DIR/venv314/bin/pip" install --no-cache-dir --prefer-binary -r "$APP_DIR/requirements.txt"
+
+echo "Setting ownership..."
+chown -R "$USER_NAME:www-data" "$APP_DIR"
+
+# Enable and start the systemd service
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+    systemctl enable mental-wellness-tracker.service
+    systemctl restart mental-wellness-tracker.service
+fi
+
+echo "Mental Wellness Tracker has been successfully installed and started!"
+echo ""
+echo "--------------------------------------------------------"
+echo "Nginx configuration template installed at:"
+echo "  /etc/nginx/sites-available/mental-wellness-tracker"
+echo ""
+echo "To expose the API on the domain 0op.in:"
+echo "1. Symlink the pre-configured Nginx config to sites-enabled:"
+echo "   sudo ln -sf /etc/nginx/sites-available/mental-wellness-tracker /etc/nginx/sites-enabled/"
+echo "2. Restart Nginx:"
+echo "   sudo systemctl restart nginx"
+echo "3. Enable HTTPS (SSL) via Certbot:"
+echo "   sudo certbot --nginx -d 0op.in -d www.0op.in"
+echo "--------------------------------------------------------"

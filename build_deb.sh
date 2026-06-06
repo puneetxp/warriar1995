@@ -130,7 +130,7 @@ echo "Using Python: $PYTHON_CMD"
 
 $PYTHON_CMD -m venv "$APP_DIR/venv314"
 echo "Downloading and installing python dependencies from requirements.txt (this may take a minute)..."
-"$APP_DIR/venv314/bin/pip" install --no-cache-dir -r "$APP_DIR/requirements.txt"
+"$APP_DIR/venv314/bin/pip" install --no-cache-dir --prefer-binary -r "$APP_DIR/requirements.txt"
 
 echo "Setting ownership..."
 chown -R "$USER_NAME:www-data" "$APP_DIR"

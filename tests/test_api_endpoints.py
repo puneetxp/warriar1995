@@ -352,3 +352,51 @@ class TestInputValidation:
         bad_payload = {**MOOD_PAYLOAD, "exam_type": "INVALID_EXAM"}
         response = await async_client.post("/api/v1/mood/analyze", json=bad_payload)
         assert response.status_code == 422
+
+
+# ── Accessibility & i18n tests ───────────────────────────────────────────────
+
+class TestAccessibility:
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_content_language_header_present(self, async_client):
+        """Verify the Content-Language header is returned matching requested language."""
+        response = await async_client.get("/health", headers={"Accept-Language": "hi"})
+        assert response.headers.get("Content-Language") == "hi"
+
+        response2 = await async_client.get("/health", headers={"Accept-Language": "en"})
+        assert response2.headers.get("Content-Language") == "en"
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_fallback_language_header(self, async_client):
+        """Verify fallback to 'en' when unsupported/missing language header is sent."""
+        response = await async_client.get("/health", headers={"Accept-Language": "fr"})
+        assert response.headers.get("Content-Language") == "en"
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_validation_error_multilingual(self, async_client):
+        """Verify validation errors are localized based on Accept-Language."""
+        # 1. Hindi validation error
+        response = await async_client.post(
+            "/api/v1/mood/analyze",
+            json={"mood_score": 3},  # missing required fields like student_id
+            headers={"Accept-Language": "hi"}
+        )
+        assert response.status_code == 422
+        data = response.json()
+        # Verify it contains Hindi translation tokens
+        assert "अमान्य" in data["message"] or "फ़ील्ड" in data["message"] or "इनपुट" in data["message"]
+
+        # 2. English validation error
+        response_en = await async_client.post(
+            "/api/v1/mood/analyze",
+            json={"mood_score": 3},
+            headers={"Accept-Language": "en"}
+        )
+        assert response_en.status_code == 422
+        data_en = response_en.json()
+        assert "Invalid input" in data_en["message"]
+

@@ -1,0 +1,16 @@
+[Unit]
+Description=Mental Wellness Tracker API Service
+After=network.target
+
+[Service]
+Type=simple
+User=wellness-tracker
+Group=www-data
+WorkingDirectory=/usr/share/mental-wellness-tracker
+ExecStart=/usr/bin/mental-wellness-tracker --host 127.0.0.1 --port 8000
+Restart=on-failure
+Environment=APP_ENV=production
+EnvironmentFile=-/etc/default/mental-wellness-tracker
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+#!/bin/bash
+# Wrapper to run the FastAPI app using the packaged virtual environment.
+
+APP_DIR="/usr/share/mental-wellness-tracker"
+VENV_BIN="$APP_DIR/venv314/bin"
+
+if [ ! -d "$VENV_BIN" ]; then
+    echo "Virtual environment not found in $APP_DIR. Did the postinst script run successfully?" >&2
+    exit 1
+fi
+
+cd "$APP_DIR"
+exec "$VENV_BIN/python" -m uvicorn main:app "$@"

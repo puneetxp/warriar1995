@@ -1,0 +1,10 @@
+Package: mental-wellness-tracker
+Version: 1.0.0-1
+Section: python
+Priority: optional
+Architecture: all
+Depends: python3
+Maintainer: PromptWars Challenger <support@example.com>
+Description: AI-powered Mental Wellness Tracker FastAPI app
+ A FastAPI + LangChain multi-agent system designed for students.
+ Bundle includes API routers, rate limiting, and agent orchestration.
