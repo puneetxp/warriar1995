@@ -156,13 +156,21 @@ async def root(request: Request):
     Returns the interactive mental wellness dashboard (HTML) for browsers,
     or the API registry metadata (JSON) for programmatic requests.
     """
-    accept = request.headers.get("accept", "")
-    if "text/html" in accept:
+    accept = request.headers.get("accept", "").lower()
+    user_agent = request.headers.get("user-agent", "").lower()
+    
+    # Check if the client is a browser or explicitly requests HTML
+    is_browser = any(ua in user_agent for ua in ["mozilla", "chrome", "safari", "firefox", "edge", "opera"])
+    wants_html = "text/html" in accept
+    wants_json = "application/json" in accept
+
+    if (wants_html or is_browser) and not wants_json:
         template_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
         if os.path.exists(template_path):
             with open(template_path, "r", encoding="utf-8") as f:
                 html_content = f.read()
             return HTMLResponse(content=html_content, status_code=200)
+
 
     registry = AgentRegistry()
     return {
