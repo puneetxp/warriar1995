@@ -3,7 +3,7 @@ routers/insights.py — Insights, analytics, and full check-in pipeline
 """
 from datetime import datetime, timezone
 import json
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 
 from models.schemas import (
     InsightRequest, InsightResponse,
@@ -15,6 +15,7 @@ from services.agent_registry import ai_invoke, ai_invoke_parallel
 from security.sanitizer import sanitize_list, sanitize_text
 from security.logger import get_logger
 from security.settings import get_settings
+from utils.i18n import get_locale, t
 
 router = APIRouter()
 logger = get_logger("router.insights")
@@ -32,16 +33,19 @@ HELPLINES = [
     response_model=InsightResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate weekly wellness insights",
+    response_description="Aggregate weekly analysis showing wellness trends, primary triggers, positive patterns, and an action plan.",
+    operation_id="weekly_summary",
     responses={
         422: {"model": ErrorResponse, "description": "Validation error"},
         502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
     },
 )
-async def weekly_summary(req: InsightRequest) -> InsightResponse:
+async def weekly_summary(req: InsightRequest, request: Request) -> InsightResponse:
     """
     Invokes **InsightAggregator** agent.
     Analyzes mood history to find trends, triggers, and generate an action plan.
     """
+    locale = get_locale(request)
     safe_history = []
     for entry in req.mood_history:
         safe_entry = {}
@@ -71,7 +75,13 @@ async def weekly_summary(req: InsightRequest) -> InsightResponse:
         logger.error("InsightAggregator failed", extra={"error": data["error"]})
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"error": "insight_aggregation_failed", "message": data["error"]},
+            detail=ErrorResponse(
+                error_code="insight_aggregation_failed",
+                message=t("error.agent_failed", locale),
+                detail=data["error"],
+                suggestion=t("error.internal_suggestion", locale),
+                help_url="/docs",
+            ).model_dump(),
         )
 
     return InsightResponse(
@@ -92,12 +102,14 @@ async def weekly_summary(req: InsightRequest) -> InsightResponse:
     response_model=FullCheckInResponse,
     status_code=status.HTTP_200_OK,
     summary="🚀 Full check-in — all agents in parallel",
+    response_description="Comprehensive wellness report containing mood analysis, crisis check, optional journal CBT reflection, and wellness advice.",
+    operation_id="full_checkin",
     responses={
         422: {"model": ErrorResponse, "description": "Validation error"},
         502: {"model": ErrorResponse, "description": "Core agent analysis failed"},
     },
 )
-async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
+async def full_checkin(req: FullCheckInRequest, request: Request) -> FullCheckInResponse:
     """
     **Master endpoint** — fans out to all relevant agents in parallel using `ai_invoke_parallel()`.
 
@@ -109,6 +121,7 @@ async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
 
     Returns a unified wellness report.
     """
+    locale = get_locale(request)
     entry = req.mood_entry
     safe_emotions = sanitize_list(entry.emotions)
     safe_note = sanitize_text(entry.note or "", max_length=500)
@@ -172,7 +185,13 @@ async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
         logger.error("Core agent in full check-in failed", extra={"error": err_msg})
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"error": "full_checkin_failed", "message": f"Core analysis failed: {err_msg}"},
+            detail=ErrorResponse(
+                error_code="full_checkin_failed",
+                message=t("error.agent_failed", locale),
+                detail=err_msg,
+                suggestion=t("error.internal_suggestion", locale),
+                help_url="/docs",
+            ).model_dump(),
         )
 
     # ── Parse MoodAnalysis ──────────────────────────────────────────
@@ -184,7 +203,7 @@ async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
 
     mood_analysis = MoodAnalysisResponse(
         student_id=req.student_id,
-        mood_label=mood_data.get("mood_label", "Unknown"),
+        mood_label=mood_data.get("mood_label") or t("mood.unknown", locale),
         analysis=mood_data.get("analysis", ""),
         detected_triggers=mood_data.get("detected_triggers", []),
         risk_level=risk_level,
@@ -196,12 +215,11 @@ async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
     # ── Parse Crisis ────────────────────────────────────────────────
     # For high/critical risk, override immediate_action
     if crisis_risk in ("high", "critical"):
-        immediate_action = (
-            "⚠️ Please reach out to a trusted adult, parent, teacher, or mental health professional immediately. "
-            "Call a helpline now — you don't have to face this alone."
-        )
+        immediate_action = t("crisis.immediate_action_high", locale)
     else:
-        immediate_action = crisis_data.get("immediate_action", "Take a short break and breathe deeply.")
+        immediate_action = crisis_data.get("immediate_action") or t("crisis.immediate_action_low", locale)
+
+    safety_message = crisis_data.get("safety_message") or t("crisis.safety_checkin", locale)
 
     crisis_check = CrisisResponse(
         student_id=req.student_id,
@@ -209,7 +227,7 @@ async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
         crisis_signals=crisis_data.get("crisis_signals", []),
         immediate_action=immediate_action,
         helpline_numbers=HELPLINES,
-        safety_message=crisis_data.get("safety_message", "You matter. Exams are just a step, not your entire worth."),
+        safety_message=safety_message,
         agent_used="CrisisDetector",
         timestamp=datetime.now(timezone.utc),
     )
@@ -237,7 +255,7 @@ async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
         if w_res and "error" not in w_res:
             wellness_advice = WellnessResponse(
                 student_id=req.student_id,
-                coach_message=w_res.get("coach_message", ""),
+                coach_message=w_res.get("coach_message") or t("wellness.no_message", locale),
                 techniques=w_res.get("techniques", []),
                 study_tip=w_res.get("study_tip", ""),
                 motivational_quote=w_res.get("motivational_quote", ""),

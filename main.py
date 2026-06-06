@@ -7,6 +7,12 @@ Architecture:
   - Agents: MoodAnalyzer, StressTriggerDetector, WellnessCoach, CrisisDetector, JournalReflector, InsightAggregator
   - LangChain chains orchestrate agent pipelines
   - FastAPI exposes REST endpoints
+
+Accessibility:
+  - All responses include Content-Language header
+  - Accept-Language header is parsed for i18n (en, hi)
+  - All errors follow a structured ErrorResponse schema with human-readable messages
+  - OpenAPI documentation is fully enriched with descriptions, examples, and operation IDs
 """
 
 from contextlib import asynccontextmanager
@@ -23,6 +29,7 @@ from security.cache import cache_clear, cache_stats
 from security.rate_limiter import RateLimitMiddleware
 from security.request_logger import RequestLoggerMiddleware
 from models.errors import ErrorResponse
+from utils.i18n import get_locale, t, get_supported_locales
 
 settings = get_settings()
 
@@ -39,7 +46,13 @@ app = FastAPI(
     title="Mental Wellness Tracker API",
     description="""
     AI-powered mental wellness tracker for students preparing for NEET, JEE, CUET, CAT, GATE, UPSC.
-    
+
+    ## Accessibility & Internationalization
+    - All endpoints support the `Accept-Language` header (`en`, `hi`)
+    - Error responses are structured and human-readable (see ErrorResponse schema)
+    - Crisis resources include Indian helpline numbers with multilingual descriptions
+    - All response bodies include a `Content-Language` header
+
     ## Multi-Agent System
     - **MoodAnalyzer** — Interprets mood entries and detects emotional patterns
     - **StressTriggerDetector** — Identifies academic and personal stress triggers
@@ -47,6 +60,13 @@ app = FastAPI(
     - **CrisisDetector** — Flags high-risk mental health signals (safety first)
     - **JournalReflector** — Offers CBT-style journal reflections
     - **InsightAggregator** — Weekly trend summaries and progress reports
+
+    ## Error Handling
+    Every error returns a structured `ErrorResponse` with:
+    - `error_code` — machine-readable identifier
+    - `message` — human-readable description (localized)
+    - `suggestion` — actionable next step
+    - `help_url` — link to API documentation
     """,
     version="1.0.0",
     lifespan=lifespan,
@@ -67,6 +87,15 @@ app.add_middleware(
 )
 app.add_middleware(RequestLoggerMiddleware)
 
+
+@app.middleware("http")
+async def add_content_language_header(request: Request, call_next):
+    locale = get_locale(request)
+    response = await call_next(request)
+    response.headers["Content-Language"] = locale
+    return response
+
+
 # Register routers
 app.include_router(mood.router,      prefix="/api/v1/mood",     tags=["Mood Tracking"])
 app.include_router(journal.router,   prefix="/api/v1/journal",  tags=["Journal"])
@@ -79,7 +108,8 @@ app.include_router(insights.router,  prefix="/api/v1/insights", tags=["Insights 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Return structured, human-friendly validation errors."""
+    """Return structured, human-friendly, localized validation errors."""
+    locale = get_locale(request)
     errors = exc.errors()
     first = errors[0] if errors else {}
     field = " → ".join(str(loc) for loc in first.get("loc", []))
@@ -87,70 +117,135 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=422,
         content=ErrorResponse(
             error_code="validation_error",
-            message=f"Invalid input in field '{field}': {first.get('msg', 'unknown error')}",
+            message=t("error.validation", locale, field=field, detail=first.get("msg", "unknown error")),
             detail=str(errors),
-            suggestion="Check the API docs at /docs for the correct request format.",
+            suggestion=t("error.validation_suggestion", locale),
+            help_url="/docs",
         ).model_dump(),
+        headers={"Content-Language": locale},
     )
 
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """Catch-all handler — never expose raw tracebacks to clients."""
+    locale = get_locale(request)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
             error_code="internal_error",
-            message="An unexpected error occurred. Please try again later.",
+            message=t("error.internal", locale),
             detail=str(exc) if not get_settings().is_production else None,
-            suggestion="If this persists, contact support.",
+            suggestion=t("error.internal_suggestion", locale),
+            help_url="/docs",
         ).model_dump(),
+        headers={"Content-Language": locale},
     )
 
 
-@app.get("/", tags=["Health"])
+@app.get(
+    "/",
+    tags=["Health"],
+    summary="Service information and agent catalog",
+    response_description="Service status, registered agents, and documentation link",
+    operation_id="get_service_info",
+)
 async def root():
+    """
+    Returns service metadata including all registered AI agents and their I/O contracts.
+    Use this endpoint to discover available agents and their capabilities.
+    """
     registry = AgentRegistry()
     return {
         "service": "Mental Wellness Tracker",
         "status": "running",
+        "version": settings.APP_VERSION,
+        "supported_locales": get_supported_locales(),
         "agents": registry.list_agents(),
         "docs": "/docs",
     }
 
 
-@app.get("/health", tags=["Health"])
+@app.get(
+    "/health",
+    tags=["Health"],
+    summary="Basic health check",
+    response_description="Simple OK status confirming the service is running",
+    operation_id="health_check",
+)
 async def health():
+    """Returns a simple health status. Does not check external dependencies."""
     return {"status": "ok"}
 
 
-@app.get("/health/liveness", tags=["Health"])
+@app.get(
+    "/health/liveness",
+    tags=["Health"],
+    summary="Kubernetes liveness probe",
+    response_description="Liveness status for container orchestrators",
+    operation_id="liveness_probe",
+)
 async def liveness():
+    """Liveness probe endpoint for Kubernetes / container orchestrators."""
     return {"status": "alive"}
 
 
-@app.get("/health/readiness", tags=["Health"])
-async def readiness():
+@app.get(
+    "/health/readiness",
+    tags=["Health"],
+    summary="Kubernetes readiness probe",
+    response_description="Readiness status including API key configuration check",
+    operation_id="readiness_probe",
+)
+async def readiness(request: Request):
+    """
+    Readiness probe — checks whether the service is ready to accept traffic.
+    Returns 503 if the Anthropic API key is not configured.
+    """
+    locale = get_locale(request)
     if not settings.api_key_configured:
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            content={"status": "not_ready", "reason": "Anthropic API Key is not configured"},
+            content={
+                "status": "not_ready",
+                "reason": t("api.not_ready", locale),
+            },
+            headers={"Content-Language": locale},
         )
     return {"status": "ready"}
 
 
-@app.get("/ready", tags=["Health"])
-async def ready():
+@app.get(
+    "/ready",
+    tags=["Health"],
+    summary="Service readiness check",
+    response_description="Whether the service is ready to process requests",
+    operation_id="ready_check",
+)
+async def ready(request: Request):
+    """Alias for /health/readiness — checks API key configuration."""
+    locale = get_locale(request)
     if not settings.api_key_configured:
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            content={"status": "not_ready", "reason": "Anthropic API Key is not configured"},
+            content={
+                "status": "not_ready",
+                "reason": t("api.not_ready", locale),
+            },
+            headers={"Content-Language": locale},
         )
     return {"status": "ready"}
 
 
-@app.get("/cache/stats", tags=["Cache"])
+@app.get(
+    "/cache/stats",
+    tags=["Cache"],
+    summary="Cache statistics",
+    response_description="Current cache entry counts (total, live, expired)",
+    operation_id="get_cache_stats",
+)
 async def get_cache_stats():
+    """Returns the current state of the in-memory TTL cache used for agent responses."""
     stats = await cache_stats()
     return stats
 
@@ -168,4 +263,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -217,6 +217,25 @@ class TestJournalEndpoints:
         response = await async_client.post("/api/v1/journal/reflect", json=bad_payload)
         assert response.status_code == 422
 
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_reflect_with_valid_category(self, async_client):
+        inv, par = mock_ai_invoke({"JournalReflector": MOCK_JOURNAL_RESPONSE, "StressTriggerDetector": MOCK_TRIGGER_RESPONSE})
+        payload = {**JOURNAL_PAYLOAD, "category": "Exam Anxiety"}
+        with patch("routers.journal.ai_invoke_parallel", par):
+            response = await async_client.post("/api/v1/journal/reflect", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["category"] == "Exam Anxiety"
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_reflect_with_too_long_category_rejected(self, async_client):
+        too_long_category = "a" * 1025
+        payload = {**JOURNAL_PAYLOAD, "category": too_long_category}
+        response = await async_client.post("/api/v1/journal/reflect", json=payload)
+        assert response.status_code == 422
+
 
 # ── Wellness endpoints ─────────────────────────────────────────────────────────
 

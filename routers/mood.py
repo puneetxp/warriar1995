@@ -10,13 +10,14 @@ Efficiency: parallel agent invocation; cached responses
 """
 
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 
 from models.schemas import MoodEntryRequest, MoodAnalysisResponse
 from models.errors import ErrorResponse
 from services.agent_registry import ai_invoke, ai_invoke_parallel
 from security.sanitizer import sanitize_list, sanitize_text
 from security.logger import get_logger
+from utils.i18n import get_locale, t
 
 router = APIRouter()
 logger = get_logger("router.mood")
@@ -29,13 +30,14 @@ CRISIS_HIGH_LEVELS = {"high", "critical"}
     response_model=MoodAnalysisResponse,
     status_code=status.HTTP_200_OK,
     summary="Analyse mood entry",
-    response_description="Emotional analysis, risk level, triggers and recommendations",
+    response_description="Detailed mood analysis, emotional risk assessment, detected triggers, and personalized student recommendations.",
+    operation_id="analyze_mood",
     responses={
         422: {"model": ErrorResponse, "description": "Validation error — invalid mood score or exam type"},
         502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
     },
 )
-async def analyze_mood(entry: MoodEntryRequest) -> MoodAnalysisResponse:
+async def analyze_mood(entry: MoodEntryRequest, request: Request) -> MoodAnalysisResponse:
     """
     Invoke **MoodAnalyzer** and **CrisisDetector** in parallel.
 
@@ -44,6 +46,7 @@ async def analyze_mood(entry: MoodEntryRequest) -> MoodAnalysisResponse:
     - Escalates risk level if crisis signals are detected
     - Returns 3 actionable recommendations
     """
+    locale = get_locale(request)
     safe_emotions = sanitize_list(entry.emotions)
     safe_note = sanitize_text(entry.note or "", max_length=500)
     combined_text = f"{', '.join(safe_emotions)}. {safe_note}"
@@ -71,7 +74,13 @@ async def analyze_mood(entry: MoodEntryRequest) -> MoodAnalysisResponse:
         logger.error("MoodAnalyzer failed", extra={"error": mood_result["error"]})
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"error": "mood_analysis_failed", "message": mood_result["error"]},
+            detail=ErrorResponse(
+                error_code="mood_analysis_failed",
+                message=t("error.agent_failed", locale),
+                detail=mood_result["error"],
+                suggestion=t("error.internal_suggestion", locale),
+                help_url="/docs",
+            ).model_dump(),
         )
 
     # Escalate risk level if crisis detector finds something worse
@@ -82,7 +91,7 @@ async def analyze_mood(entry: MoodEntryRequest) -> MoodAnalysisResponse:
 
     return MoodAnalysisResponse(
         student_id=entry.student_id,
-        mood_label=mood_result.get("mood_label", "Unknown"),
+        mood_label=mood_result.get("mood_label") or t("mood.unknown", locale),
         analysis=mood_result.get("analysis", ""),
         detected_triggers=mood_result.get("detected_triggers", []),
         risk_level=risk_level,
@@ -96,13 +105,19 @@ async def analyze_mood(entry: MoodEntryRequest) -> MoodAnalysisResponse:
     "/quick-check",
     status_code=status.HTTP_200_OK,
     summary="Lightweight mood check (MoodAnalyzer only)",
-    response_description="Quick mood analysis without crisis screening",
+    response_description="Quick, single-agent mood analysis without full crisis screening.",
+    operation_id="quick_mood_check",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
+    },
 )
-async def quick_mood_check(entry: MoodEntryRequest):
+async def quick_mood_check(entry: MoodEntryRequest, request: Request):
     """
     Single-agent fast mood check — no parallel overhead, no crisis screen.
     Use for frequent low-stakes check-ins.
     """
+    locale = get_locale(request)
     safe_emotions = sanitize_list(entry.emotions)
     safe_note = sanitize_text(entry.note or "", max_length=500)
 
@@ -119,4 +134,19 @@ async def quick_mood_check(entry: MoodEntryRequest):
         },
         student_id=entry.student_id,
     )
+    
+    data = result.get("result", {})
+    if "error" in data:
+        logger.error("MoodAnalyzer quick-check failed", extra={"error": data["error"]})
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=ErrorResponse(
+                error_code="mood_analysis_failed",
+                message=t("error.agent_failed", locale),
+                detail=data["error"],
+                suggestion=t("error.internal_suggestion", locale),
+                help_url="/docs",
+            ).model_dump(),
+        )
+
     return {"student_id": entry.student_id, **result}
