@@ -15,3 +15,13 @@ ALLOWED_ORIGINS = "*"
 # NOTE: Sensitive keys such as ANTHROPIC_API_KEY must not be placed here in plaintext.
 # Set them using the Wrangler CLI:
 #   $ wrangler secret put ANTHROPIC_API_KEY
+
+# To deploy to a custom domain on Cloudflare Workers:
+[[routes]]
+pattern = "0op.in"
+custom_domain = true
+
+[[routes]]
+pattern = "www.0op.in"
+custom_domain = true
+

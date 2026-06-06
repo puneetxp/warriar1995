@@ -21,6 +21,7 @@ mkdir -p "$BUILD_DIR/DEBIAN"
 mkdir -p "$BUILD_DIR/usr/share/$PACKAGE_NAME"
 mkdir -p "$BUILD_DIR/usr/bin"
 mkdir -p "$BUILD_DIR/lib/systemd/system"
+mkdir -p "$BUILD_DIR/etc/nginx/sites-available"
 
 # 1. Copy application source files cleanly (excluding pycache)
 cp main.py requirements.txt "$BUILD_DIR/usr/share/$PACKAGE_NAME/"
@@ -64,6 +65,29 @@ EnvironmentFile=-/etc/default/mental-wellness-tracker
 
 [Install]
 WantedBy=multi-user.target
+EOF
+
+# 3b. Create Nginx virtual host configuration template
+cat << 'EOF' > "$BUILD_DIR/etc/nginx/sites-available/${PACKAGE_NAME}"
+server {
+    listen 80;
+    server_name 0op.in www.0op.in;
+
+    client_max_body_size 10M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
 EOF
 
 # 4. Create the Debian Control File
@@ -119,6 +143,19 @@ if [ -d /run/systemd/system ]; then
 fi
 
 echo "Mental Wellness Tracker has been successfully installed and started!"
+echo ""
+echo "--------------------------------------------------------"
+echo "Nginx configuration template installed at:"
+echo "  /etc/nginx/sites-available/mental-wellness-tracker"
+echo ""
+echo "To expose the API on the domain 0op.in:"
+echo "1. Symlink the pre-configured Nginx config to sites-enabled:"
+echo "   sudo ln -sf /etc/nginx/sites-available/mental-wellness-tracker /etc/nginx/sites-enabled/"
+echo "2. Restart Nginx:"
+echo "   sudo systemctl restart nginx"
+echo "3. Enable HTTPS (SSL) via Certbot:"
+echo "   sudo certbot --nginx -d 0op.in -d www.0op.in"
+echo "--------------------------------------------------------"
 EOF
 
 chmod 755 "$BUILD_DIR/DEBIAN/postinst"
