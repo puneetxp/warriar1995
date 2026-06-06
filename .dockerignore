@@ -10,6 +10,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+venv314/
 env/
 
 # IDEs

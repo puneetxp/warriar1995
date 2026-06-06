@@ -94,7 +94,17 @@ if ! id -u "$USER_NAME" >/dev/null 2>&1; then
 fi
 
 echo "Setting up Python virtual environment..."
-python3 -m venv "$APP_DIR/.venv"
+PYTHON_CMD="python3"
+if [ -x "/usr/local/bin/python3.14" ]; then
+    PYTHON_CMD="/usr/local/bin/python3.14"
+elif command -v python3.14 &> /dev/null; then
+    PYTHON_CMD="python3.14"
+elif command -v python3.13 &> /dev/null; then
+    PYTHON_CMD="python3.13"
+fi
+echo "Using Python: $PYTHON_CMD"
+
+$PYTHON_CMD -m venv "$APP_DIR/.venv"
 "$APP_DIR/.venv/bin/pip" install --upgrade pip
 "$APP_DIR/.venv/bin/pip" install -r "$APP_DIR/requirements.txt"
 
