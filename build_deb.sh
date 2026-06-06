@@ -129,8 +129,8 @@ fi
 echo "Using Python: $PYTHON_CMD"
 
 $PYTHON_CMD -m venv "$APP_DIR/venv314"
-"$APP_DIR/venv314/bin/pip" install --upgrade pip
-"$APP_DIR/venv314/bin/pip" install -r "$APP_DIR/requirements.txt"
+echo "Downloading and installing python dependencies from requirements.txt (this may take a minute)..."
+"$APP_DIR/venv314/bin/pip" install --no-cache-dir -r "$APP_DIR/requirements.txt"
 
 echo "Setting ownership..."
 chown -R "$USER_NAME:www-data" "$APP_DIR"
