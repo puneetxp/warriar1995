@@ -34,7 +34,7 @@ cat << 'EOF' > "$BUILD_DIR/usr/bin/$PACKAGE_NAME"
 # Wrapper to run the FastAPI app using the packaged virtual environment.
 
 APP_DIR="/usr/share/mental-wellness-tracker"
-VENV_BIN="$APP_DIR/.venv/bin"
+VENV_BIN="$APP_DIR/venv314/bin"
 
 if [ ! -d "$VENV_BIN" ]; then
     echo "Virtual environment not found in $APP_DIR. Did the postinst script run successfully?" >&2
@@ -97,7 +97,7 @@ Version: $VERSION-$RELEASE
 Section: python
 Priority: optional
 Architecture: $ARCH
-Depends: python3, python3-venv, python3-pip
+Depends: python3
 Maintainer: PromptWars Challenger <support@example.com>
 Description: AI-powered Mental Wellness Tracker FastAPI app
  A FastAPI + LangChain multi-agent system designed for students.
@@ -128,9 +128,9 @@ elif command -v python3.13 &> /dev/null; then
 fi
 echo "Using Python: $PYTHON_CMD"
 
-$PYTHON_CMD -m venv "$APP_DIR/.venv"
-"$APP_DIR/.venv/bin/pip" install --upgrade pip
-"$APP_DIR/.venv/bin/pip" install -r "$APP_DIR/requirements.txt"
+$PYTHON_CMD -m venv "$APP_DIR/venv314"
+"$APP_DIR/venv314/bin/pip" install --upgrade pip
+"$APP_DIR/venv314/bin/pip" install -r "$APP_DIR/requirements.txt"
 
 echo "Setting ownership..."
 chown -R "$USER_NAME:www-data" "$APP_DIR"
