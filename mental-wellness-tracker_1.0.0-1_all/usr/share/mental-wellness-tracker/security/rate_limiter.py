@@ -55,14 +55,27 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "Rate limit exceeded",
                 extra={"client_ip": client_ip, "path": request.url.path},
             )
+            from models.errors import ErrorResponse
+            from utils.i18n import get_locale, t
+            
+            locale = get_locale(request)
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={
+                    **ErrorResponse(
+                        error_code="rate_limit_exceeded",
+                        message=t("error.rate_limit", locale, seconds=str(retry_after)),
+                        detail=f"Rate limit exceeded: {self.calls} requests allowed per {self.period} seconds.",
+                        suggestion=t("error.rate_limit_suggestion", locale),
+                        help_url="/docs",
+                    ).model_dump(),
                     "error": "rate_limit_exceeded",
-                    "message": f"Too many requests. Please wait {retry_after} seconds.",
                     "retry_after_seconds": retry_after,
                 },
-                headers={"Retry-After": str(retry_after)},
+                headers={
+                    "Retry-After": str(retry_after),
+                    "Content-Language": locale,
+                },
             )
 
         window.append(now)

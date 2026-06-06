@@ -128,9 +128,18 @@ elif command -v python3.13 &> /dev/null; then
 fi
 echo "Using Python: $PYTHON_CMD"
 
-$PYTHON_CMD -m venv "$APP_DIR/venv314"
+# Clean up any existing virtual environment to prevent permission or file-locking conflicts
+rm -rf "$APP_DIR/venv314"
+
+# Create the virtual environment without installing pip in a piped subprocess (avoids pipe deadlocks)
+$PYTHON_CMD -m venv --without-pip "$APP_DIR/venv314"
+
+# Manually bootstrap pip using ensurepip directly to terminal output (prevents pipe buffer hangs)
+"$APP_DIR/venv314/bin/python" -m ensurepip --upgrade --default-pip
+
 echo "Downloading and installing python dependencies from requirements.txt (this may take a minute)..."
 "$APP_DIR/venv314/bin/pip" install --no-cache-dir --prefer-binary -r "$APP_DIR/requirements.txt"
+
 
 echo "Setting ownership..."
 chown -R "$USER_NAME:www-data" "$APP_DIR"

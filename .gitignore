@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+mental-wellness-tracker_1.0.0-1_all/
+*.deb
+.env
