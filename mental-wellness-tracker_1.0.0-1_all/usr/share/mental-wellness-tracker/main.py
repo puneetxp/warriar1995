@@ -16,10 +16,11 @@ Accessibility:
 """
 
 from contextlib import asynccontextmanager
+import os
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import uvicorn
 
 from security.settings import get_settings
@@ -146,15 +147,23 @@ async def general_exception_handler(request: Request, exc: Exception):
 @app.get(
     "/",
     tags=["Health"],
-    summary="Service information and agent catalog",
-    response_description="Service status, registered agents, and documentation link",
+    summary="Service status, agent catalog, and wellness dashboard",
+    response_description="Bilingual HTML Wellness Dashboard (for browsers) or JSON Service Metadata",
     operation_id="get_service_info",
 )
-async def root():
+async def root(request: Request):
     """
-    Returns service metadata including all registered AI agents and their I/O contracts.
-    Use this endpoint to discover available agents and their capabilities.
+    Returns the interactive mental wellness dashboard (HTML) for browsers,
+    or the API registry metadata (JSON) for programmatic requests.
     """
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        template_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
+        if os.path.exists(template_path):
+            with open(template_path, "r", encoding="utf-8") as f:
+                html_content = f.read()
+            return HTMLResponse(content=html_content, status_code=200)
+
     registry = AgentRegistry()
     return {
         "service": "Mental Wellness Tracker",

@@ -89,6 +89,13 @@ class TestSystemEndpoints:
         assert len(data["agents"]) == 6  # All 6 agents registered
 
     @pytest.mark.unit
+    def test_root_returns_html_dashboard_for_browser(self, client):
+        response = client.get("/", headers={"Accept": "text/html"})
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        assert "Student Wellness Hub" in response.text
+
+    @pytest.mark.unit
     def test_health_returns_ok(self, client):
         response = client.get("/health")
         assert response.status_code == 200

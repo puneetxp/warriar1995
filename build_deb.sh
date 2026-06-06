@@ -25,7 +25,7 @@ mkdir -p "$BUILD_DIR/etc/nginx/sites-available"
 
 # 1. Copy application source files cleanly (excluding pycache)
 cp main.py requirements.txt "$BUILD_DIR/usr/share/$PACKAGE_NAME/"
-cp -r models routers security services utils "$BUILD_DIR/usr/share/$PACKAGE_NAME/"
+cp -r models routers security services utils templates "$BUILD_DIR/usr/share/$PACKAGE_NAME/"
 find "$BUILD_DIR/usr/share/$PACKAGE_NAME" -type d -name "__pycache__" -exec rm -rf {} +
 
 # 2. Create the executable binary/wrapper script in /usr/bin

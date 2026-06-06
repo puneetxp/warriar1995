@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Wellness Hub | Mental Wellness Tracker</title>
+  <meta name="description" content="AI-powered mental wellness dashboard for students preparing for competitive exams like JEE, NEET, UPSC, and CAT. Provides coping techniques, CBT journaling, and crisis safety support.">
+  
+  <!-- Modern Outfit Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ─── CSS Variables & Theme System ─── */
+    :root {
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      
+      /* Dark Theme (Default & Preferred) */
+      --bg-color: #0f172a;
+      --panel-bg: rgba(30, 41, 59, 0.7);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --accent: #6366f1;         /* Indigo */
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      
+      --success: #10b981;        /* Emerald */
+      --warning: #f59e0b;        /* Amber */
+      --danger: #ef4444;         /* Rose */
+      
+      --focus-outline: #f43f5e;   /* Rose focus indicator for high visibility */
+      
+      --container-max: 1200px;
+    }
+
+    /* Light Theme Support */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-color: #f8fafc;
+        --panel-bg: rgba(255, 255, 255, 0.85);
+        --panel-border: rgba(15, 23, 42, 0.08);
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        
+        --accent: #4f46e5;
+        --accent-hover: #3730a3;
+        --accent-glow: rgba(79, 70, 229, 0.1);
+        
+        --focus-outline: #e11d48;
+      }
+    }
+
+    /* Accessibility settings overrides */
+    body.high-contrast {
+      --panel-bg: #000000;
+      --bg-color: #000000;
+      --text-main: #ffffff;
+      --text-muted: #ffff00;
+      --accent: #00ffff;
+      --accent-hover: #00ffff;
+      --panel-border: #ffffff;
+      --focus-outline: #ffff00;
+    }
+    body.large-text {
+      font-size: 1.15rem;
+    }
+
+    /* ─── Global Reset & Base Styles ─── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      text-align: start;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Visually Hidden Utility for Skip Link & Screen Readers */
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    /* Skip link positioning */
+    .skip-link {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      z-index: 1000;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Keyboard Focus Indicator Style */
+    :focus-visible {
+      outline: 3px solid var(--focus-outline) !important;
+      outline-offset: 3px !important;
+    }
+
+    /* ─── Layout Landmarks ─── */
+    header {
+      border-bottom: 1px solid var(--panel-border);
+      padding: 1.5rem 1rem;
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: rgba(15, 23, 42, 0.6);
+    }
+    @media (prefers-color-scheme: light) {
+      header {
+        background-color: rgba(248, 250, 252, 0.8);
+      }
+    }
+
+    .header-container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      background: linear-gradient(135deg, var(--text-main) 60%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Buttons Style */
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid transparent;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background-color: var(--accent);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+    .btn-outline {
+      background-color: transparent;
+      border-color: var(--panel-border);
+      color: var(--text-main);
+    }
+    .btn-outline:hover {
+      background-color: var(--panel-border);
+    }
+    .btn-toggle {
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.375rem;
+      font-size: 0.85rem;
+      background-color: var(--panel-bg);
+      border-color: var(--panel-border);
+      color: var(--text-main);
+    }
+    .btn-toggle[aria-pressed="true"] {
+      background-color: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      max-width: var(--container-max);
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ─── Navigation Side Panel ─── */
+    nav.side-nav {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 1rem;
+      padding: 1rem;
+      height: fit-content;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    nav.side-nav ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    nav.side-nav button {
+      width: 100%;
+      text-align: start;
+      padding: 0.85rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: 0.5rem;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    nav.side-nav button:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+    @media (prefers-color-scheme: light) {
+      nav.side-nav button:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+
+    nav.side-nav button[aria-selected="true"] {
+      background-color: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    /* ─── Tab Content Panels ─── */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .tab-panel {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tab-panel h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .tab-panel p.desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* ─── Form Elements ─── */
+    .form-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .form-group .hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .input-control {
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      background-color: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
+      color: var(--text-main);
+      width: 100%;
+      min-height: 48px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    @media (prefers-color-scheme: light) {
+      .input-control {
+        background-color: rgba(255, 255, 255, 0.9);
+      }
+    }
+    .input-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea.input-control {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    /* Radio Group Styles */
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      min-height: 48px;
+    }
+    .radio-item input {
+      width: 1.25rem;
+      height: 1.25rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Checkbox Group Styles */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .checkbox-item input {
+      width: 1.2rem;
+      height: 1.2rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ─── Results Dashboard Section ─── */
+    .result-section {
+      background-color: rgba(99, 102, 241, 0.04);
+      border: 1.5px dashed rgba(99, 102, 241, 0.2);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      display: none;
+    }
+    .result-section.active {
+      display: block;
+    }
+    .result-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .result-content {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-right: 0.5rem;
+    }
+    .badge-low { background-color: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .badge-moderate { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .badge-high { background-color: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    .badge-critical { background-color: rgba(239, 68, 68, 0.3); color: var(--danger); animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    /* Live Region / Screen Reader Announcements Zone */
+    #announcer {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    /* Helpline Grid */
+    .helpline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .helpline-card {
+      background-color: rgba(15, 23, 42, 0.25);
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .helpline-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .helpline-num {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .helpline-num:hover {
+      text-decoration: underline;
+    }
+    .helpline-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Footer styling */
+    footer {
+      border-top: 1px solid var(--panel-border);
+      padding: 2rem 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Skip to Main Content for keyboard navigators (WCAG) -->
+  <a href="#main-content" class="skip-link visually-hidden" id="skip-link-text">Skip to content</a>
+
+  <!-- ARIA Live Region for accessibility screen readers -->
+  <div id="announcer" aria-live="polite" aria-atomic="true"></div>
+
+  <header>
+    <div class="header-container">
+      <div class="brand">
+        <h1 id="header-title">Student Wellness Hub</h1>
+        <p id="header-subtitle">Self-care & Academic Support Platform</p>
+      </div>
+      
+      <div class="controls-group">
+        <!-- Language Toggles -->
+        <button type="button" class="btn btn-toggle" id="lang-en" aria-pressed="true" onclick="setLanguage('en')">English</button>
+        <button type="button" class="btn btn-toggle" id="lang-hi" aria-pressed="false" onclick="setLanguage('hi')">हिन्दी</button>
+        
+        <!-- Text Size -->
+        <button type="button" class="btn btn-outline" id="btn-text-size" onclick="toggleTextSize()" aria-label="Toggle text size">A+</button>
+        
+        <!-- Contrast -->
+        <button type="button" class="btn btn-outline" id="btn-contrast" onclick="toggleContrast()" aria-label="Toggle high contrast mode">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+    <!-- Navigation Sidebar - Role tablist (WCAG) -->
+    <nav class="side-nav" aria-label="Dashboard Navigation">
+      <ul role="tablist">
+        <li role="presentation">
+          <button role="tab" id="tab-mood" aria-selected="true" aria-controls="panel-mood" onclick="switchTab('mood')">
+            <span>📊</span> <span data-i18n="tab.mood">Mood Check-in</span>
+          </button>
+        </li>
+        <li role="presentation">
+          <button role="tab" id="tab-journal" aria-selected="false" aria-controls="panel-journal" tabindex="-1" onclick="switchTab('journal')">
+            <span>✍️</span> <span data-i18n="tab.journal">CBT Journal</span>
+          </button>
+        </li>
+        <li role="presentation">
+          <button role="tab" id="tab-wellness" aria-selected="false" aria-controls="panel-wellness" tabindex="-1" onclick="switchTab('wellness')">
+            <span>🧘</span> <span data-i18n="tab.wellness">Wellness Coach</span>
+          </button>
+        </li>
+        <li role="presentation">
+          <button role="tab" id="tab-crisis" aria-selected="false" aria-controls="panel-crisis" tabindex="-1" onclick="switchTab('crisis')">
+            <span>🛡️</span> <span data-i18n="tab.crisis">Safety screening</span>
+          </button>
+        </li>
+        <li role="presentation">
+          <button role="tab" id="tab-insights" aria-selected="false" aria-controls="panel-insights" tabindex="-1" onclick="switchTab('insights')">
+            <span>📈</span> <span data-i18n="tab.insights">Weekly Summary</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Content Workspace -->
+    <div class="content-area">
+
+      <!-- ─── Panel: Mood Check-in ─── -->
+      <section role="tabpanel" id="panel-mood" class="tab-panel active" aria-labelledby="tab-mood">
+        <h2 data-i18n="mood.title">Mood Check-in</h2>
+        <p class="desc" data-i18n="mood.desc">Submit your current mood parameters to receive an emotional analysis and personalized advice.</p>
+        
+        <form id="form-mood" onsubmit="submitMood(event)">
+          <div class="form-group">
+            <label for="mood-student-id" data-i18n="field.student_id">Student ID *</label>
+            <input type="text" id="mood-student-id" name="student_id" class="input-control" required placeholder="e.g. stu_001" autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label id="label-mood-score" data-i18n="field.mood_score">How are you feeling? (1 = Low, 5 = Great) *</label>
+            <div class="radio-group" role="radiogroup" aria-labelledby="label-mood-score">
+              <label class="radio-item"><input type="radio" name="mood_score" value="1" required> <span>1 😢</span></label>
+              <label class="radio-item"><input type="radio" name="mood_score" value="2"> <span>2 😕</span></label>
+              <label class="radio-item"><input type="radio" name="mood_score" value="3"> <span>3 😐</span></label>
+              <label class="radio-item"><input type="radio" name="mood_score" value="4"> <span>4 🙂</span></label>
+              <label class="radio-item"><input type="radio" name="mood_score" value="5"> <span>5 😃</span></label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label id="label-emotions" data-i18n="field.emotions">Select current emotions *</label>
+            <div class="checkbox-group" aria-labelledby="label-emotions">
+              <label class="checkbox-item"><input type="checkbox" name="emotions" value="stressed"> <span data-i18n="emo.stressed">Stressed</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="emotions" value="anxious"> <span data-i18n="emo.anxious">Anxious</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="emotions" value="tired"> <span data-i18n="emo.tired">Tired</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="emotions" value="calm"> <span data-i18n="emo.calm">Calm</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="emotions" value="happy"> <span data-i18n="emo.happy">Happy</span></label>
+              <label class="checkbox-item"><input type="checkbox" name="emotions" value="lonely"> <span data-i18n="emo.lonely">Lonely</span></label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="mood-exam-type" data-i18n="field.exam_type">Target Competitive Exam *</label>
+            <select id="mood-exam-type" name="exam_type" class="input-control" required>
+              <option value="JEE">JEE</option>
+              <option value="NEET">NEET</option>
+              <option value="UPSC">UPSC</option>
+              <option value="CAT">CAT</option>
+              <option value="GATE">GATE</option>
+              <option value="BOARD">BOARD</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="mood-days" data-i18n="field.days_left">Days Left Until Exam</label>
+            <input type="number" id="mood-days" name="days_until_exam" class="input-control" min="0" placeholder="e.g. 30" inputmode="numeric">
+          </div>
+
+          <div class="form-group">
+            <label for="mood-sleep" data-i18n="field.sleep_hours">Sleep Last Night (Hours)</label>
+            <input type="number" id="mood-sleep" name="sleep_hours" class="input-control" min="0" max="24" step="0.5" placeholder="e.g. 7">
+          </div>
+
+          <div class="form-group">
+            <label for="mood-note" data-i18n="field.notes">Tell us more (max 500 chars)</label>
+            <textarea id="mood-note" name="note" class="input-control" maxlength="500" placeholder="Type here..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="btn.submit">Submit Analysis</button>
+        </form>
+
+        <!-- Dynamic Output -->
+        <div class="result-section" id="result-mood">
+          <div class="result-title"><span>📊</span> <span data-i18n="result.mood_title">Analysis Result</span></div>
+          <div class="result-content" id="result-content-mood"></div>
+        </div>
+      </section>
+
+      <!-- ─── Panel: CBT Journal ─── -->
+      <section role="tabpanel" id="panel-journal" class="tab-panel" aria-labelledby="tab-journal">
+        <h2 data-i18n="journal.title">CBT Journal</h2>
+        <p class="desc" data-i18n="journal.desc">Write your thoughts and let our AI agents analyze them for cognitive distortions and guide reframing.</p>
+        
+        <form id="form-journal" onsubmit="submitJournal(event)">
+          <div class="form-group">
+            <label for="journal-student-id" data-i18n="field.student_id">Student ID *</label>
+            <input type="text" id="journal-student-id" class="input-control" required placeholder="e.g. stu_001" autocomplete="username">
+          </div>
+          
+          <div class="form-group">
+            <label for="journal-exam-type" data-i18n="field.exam_type">Target Competitive Exam *</label>
+            <select id="journal-exam-type" class="input-control" required>
+              <option value="JEE">JEE</option>
+              <option value="NEET">NEET</option>
+              <option value="UPSC">UPSC</option>
+              <option value="CAT">CAT</option>
+              <option value="GATE">GATE</option>
+              <option value="BOARD">BOARD</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="journal-category" data-i18n="field.category">Category Tag</label>
+            <input type="text" id="journal-category" class="input-control" placeholder="e.g. Exam Anxiety, Procrastination" maxlength="1024">
+          </div>
+
+          <div class="form-group">
+            <label for="journal-text" data-i18n="field.journal_text">Reflective Writing (10 - 2000 characters) *</label>
+            <span id="journal-help" class="hint" data-i18n="journal.text_hint">Be open. Share what is stressing you.</span>
+            <textarea id="journal-text" aria-describedby="journal-help" class="input-control" required minlength="10" maxlength="2000" placeholder="I am feeling..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="btn.submit">Process Reflection</button>
+        </form>
+
+        <div class="result-section" id="result-journal">
+          <div class="result-title"><span>✍️</span> <span data-i18n="result.journal_title">CBT Analysis</span></div>
+          <div class="result-content" id="result-content-journal"></div>
+        </div>
+      </section>
+
+      <!-- ─── Panel: Wellness Coach ─── -->
+      <section role="tabpanel" id="panel-wellness" class="tab-panel" aria-labelledby="tab-wellness">
+        <h2 data-i18n="wellness.title">Wellness Coach</h2>
+        <p class="desc" data-i18n="wellness.desc">Receive custom mindfulness, breathing exercises, and study planning recommendations.</p>
+        
+        <form id="form-wellness" onsubmit="submitWellness(event)">
+          <div class="form-group">
+            <label for="wellness-student-id" data-i18n="field.student_id">Student ID *</label>
+            <input type="text" id="wellness-student-id" class="input-control" required placeholder="e.g. stu_001" autocomplete="username">
+          </div>
+          
+          <div class="form-group">
+            <label for="wellness-exam-type" data-i18n="field.exam_type">Target Competitive Exam *</label>
+            <select id="wellness-exam-type" class="input-control" required>
+              <option value="JEE">JEE</option>
+              <option value="NEET">NEET</option>
+              <option value="UPSC">UPSC</option>
+              <option value="CAT">CAT</option>
+              <option value="GATE">GATE</option>
+              <option value="BOARD">BOARD</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="wellness-urgency" data-i18n="field.urgency">Stress Urgency *</label>
+            <select id="wellness-urgency" class="input-control" required>
+              <option value="low">Low - General Guidance</option>
+              <option value="medium">Medium - Active Stress</option>
+              <option value="high">High - Immediate Coping</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="wellness-technique" data-i18n="field.technique">Preferred Exercise Type</label>
+            <select id="wellness-technique" class="input-control">
+              <option value="any">Any Technique</option>
+              <option value="breathing">Breathing Exercise</option>
+              <option value="meditation">Meditation / Mindfulness</option>
+              <option value="movement">Physical Activity / Stretch</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="wellness-challenge" data-i18n="field.challenge">What challenge are you facing today? *</label>
+            <textarea id="wellness-challenge" class="input-control" required placeholder="e.g. I can't sleep, I'm procrastinating..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="btn.submit">Get Coping Strategy</button>
+        </form>
+
+        <div class="result-section" id="result-wellness">
+          <div class="result-title"><span>🧘</span> <span data-i18n="result.wellness_title">Coping Strategy Card</span></div>
+          <div class="result-content" id="result-content-wellness"></div>
+        </div>
+      </section>
+
+      <!-- ─── Panel: Crisis Check ─── -->
+      <section role="tabpanel" id="panel-crisis" class="tab-panel" aria-labelledby="tab-crisis">
+        <h2 data-i18n="crisis.title">Crisis Safety Screening</h2>
+        <p class="desc" data-i18n="crisis.desc">Our safety net screening tool. Screen text for immediate crisis cues and view helplines.</p>
+        
+        <form id="form-crisis" onsubmit="submitCrisis(event)">
+          <div class="form-group">
+            <label for="crisis-student-id" data-i18n="field.student_id">Student ID *</label>
+            <input type="text" id="crisis-student-id" class="input-control" required placeholder="e.g. stu_001" autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label for="crisis-text" data-i18n="field.screen_text">Safety Screening Text *</label>
+            <textarea id="crisis-text" class="input-control" required placeholder="Type safety check-in text here..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="btn.submit">Run Safety Check</button>
+        </form>
+
+        <div class="result-section" id="result-crisis">
+          <div class="result-title"><span>🛡️</span> <span data-i18n="result.crisis_title">Safety Evaluation</span></div>
+          <div class="result-content" id="result-content-crisis"></div>
+        </div>
+      </section>
+
+      <!-- ─── Panel: Insights & Trend ─── -->
+      <section role="tabpanel" id="panel-insights" class="tab-panel" aria-labelledby="tab-insights">
+        <h2 data-i18n="insights.title">Weekly Insights & Historical Trends</h2>
+        <p class="desc" data-i18n="insights.desc">Submit recent mood entries to compile an analytics trend report and generated coping action plan.</p>
+        
+        <form id="form-insights" onsubmit="submitInsights(event)">
+          <div class="form-group">
+            <label for="insights-student-id" data-i18n="field.student_id">Student ID *</label>
+            <input type="text" id="insights-student-id" class="input-control" required placeholder="e.g. stu_001" autocomplete="username">
+          </div>
+
+          <div class="form-group">
+            <label for="insights-exam-type" data-i18n="field.exam_type">Target Competitive Exam *</label>
+            <select id="insights-exam-type" class="input-control" required>
+              <option value="JEE">JEE</option>
+              <option value="NEET">NEET</option>
+              <option value="UPSC">UPSC</option>
+              <option value="CAT">CAT</option>
+              <option value="GATE">GATE</option>
+              <option value="BOARD">BOARD</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="insights-days" data-i18n="field.period_days">Analysis Period (Days)</label>
+            <input type="number" id="insights-days" class="input-control" value="7" min="1" max="30">
+          </div>
+
+          <button type="submit" class="btn btn-primary" data-i18n="btn.submit">Generate Weekly Summary</button>
+        </form>
+
+        <div class="result-section" id="result-insights">
+          <div class="result-title"><span>📈</span> <span data-i18n="result.insights_title">Insights Summary</span></div>
+          <div class="result-content" id="result-content-insights"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 Mental Wellness Tracker Platform. Designed for JEE, NEET, UPSC, & CAT aspirants.</p>
+  </footer>
+
+  <script>
+    // ─── Translations Dictionary (Bilingual EN / HI) ───
+    const TRANSLATIONS = {
+      en: {
+        "tab.mood": "Mood Check-in",
+        "tab.journal": "CBT Journal",
+        "tab.wellness": "Wellness Coach",
+        "tab.crisis": "Safety Screening",
+        "tab.insights": "Weekly Summary",
+        
+        "mood.title": "Mood Check-in",
+        "mood.desc": "Submit your current mood parameters to receive an emotional analysis and personalized advice.",
+        "journal.title": "CBT Journal",
+        "journal.desc": "Write your thoughts and let our AI agents analyze them for cognitive distortions and guide reframing.",
+        "wellness.title": "Wellness Coach",
+        "wellness.desc": "Receive custom mindfulness, breathing exercises, and study planning recommendations.",
+        "crisis.title": "Crisis Safety Screening",
+        "crisis.desc": "Our safety net screening tool. Screen text for immediate crisis cues and view helplines.",
+        "insights.title": "Weekly Insights & Historical Trends",
+        "insights.desc": "Submit recent mood entries to compile an analytics trend report and generated coping action plan.",
+        
+        "field.student_id": "Student ID *",
+        "field.mood_score": "How are you feeling? (1 = Low, 5 = Great) *",
+        "field.emotions": "Select current emotions *",
+        "field.exam_type": "Target Competitive Exam *",
+        "field.days_left": "Days Left Until Exam",
+        "field.sleep_hours": "Sleep Last Night (Hours)",
+        "field.notes": "Tell us more (max 500 chars)",
+        "field.category": "Category Tag",
+        "field.journal_text": "Reflective Writing (10 - 2000 characters) *",
+        "field.urgency": "Stress Urgency *",
+        "field.technique": "Preferred Exercise Type",
+        "field.challenge": "What challenge are you facing today? *",
+        "field.screen_text": "Safety Screening Text *",
+        "field.period_days": "Analysis Period (Days)",
+        
+        "journal.text_hint": "Be open. Share what is stressing you.",
+        "emo.stressed": "Stressed",
+        "emo.anxious": "Anxious",
+        "emo.tired": "Tired",
+        "emo.calm": "Calm",
+        "emo.happy": "Happy",
+        "emo.lonely": "Lonely",
+        
+        "btn.submit": "Submit Request",
+        
+        "result.mood_title": "Analysis Result",
+        "result.journal_title": "CBT Analysis",
+        "result.wellness_title": "Coping Strategy Card",
+        "result.crisis_title": "Safety Evaluation",
+        "result.insights_title": "Insights Summary",
+        
+        "loading": "Processing, please wait...",
+        "err_title": "Error Processing Request",
+        "suggestion_title": "Suggestion"
+      },
+      hi: {
+        "tab.mood": "मूड चेक-इन",
+        "tab.journal": "सीबीटी जर्नल",
+        "tab.wellness": "वेलनेस कोच",
+        "tab.crisis": "सुरक्षा स्क्रीनिंग",
+        "tab.insights": "साप्ताहिक सारांश",
+        
+        "mood.title": "मूड चेक-इन",
+        "mood.desc": "भावनात्मक विश्लेषण और व्यक्तिगत सलाह प्राप्त करने के लिए अपनी वर्तमान मूड स्थिति सबमिट करें।",
+        "journal.title": "सीबीटी जर्नल",
+        "journal.desc": "अपने विचार लिखें और हमारे एआई एजेंटों को संज्ञानात्मक विकृतियों (cognitive distortions) का विश्लेषण करने दें।",
+        "wellness.title": "वेलनेस कोच",
+        "wellness.desc": "कस्टम माइंडफुलनेस, सांस लेने के व्यायाम और अध्ययन योजना से जुड़ी सलाह प्राप्त करें।",
+        "crisis.title": "संकट सुरक्षा स्क्रीनिंग",
+        "crisis.desc": "हमारा सुरक्षा नेट स्क्रीनिंग टूल। तत्काल संकट के संकेतों के लिए टेक्स्ट को स्क्रीन करें और हेल्पलाइन देखें।",
+        "insights.title": "साप्ताहिक अंतर्दृष्टि और रुझान",
+        "insights.desc": "साप्ताहिक रिपोर्ट और मुकाबला कार्य योजना संकलित करने के लिए हाल के मूड डेटा की जांच करें।",
+        
+        "field.student_id": "छात्र आईडी *",
+        "field.mood_score": "आप कैसा महसूस कर रहे हैं? (1 = परेशान, 5 = बहुत खुश) *",
+        "field.emotions": "वर्तमान भावनाएं चुनें *",
+        "field.exam_type": "लक्ष्य प्रतियोगी परीक्षा *",
+        "field.days_left": "परीक्षा में बचे दिन",
+        "field.sleep_hours": "कल रात की नींद (घंटे)",
+        "field.notes": "हमें और बताएं (अधिकतम 500 शब्द)",
+        "field.category": "श्रेणी टैग (Category Tag)",
+        "field.journal_text": "चिंतनशील लेखन (10 - 2000 अक्षर) *",
+        "field.urgency": "तनाव की गंभीरता *",
+        "field.technique": "पसंदीदा व्यायाम प्रकार",
+        "field.challenge": "आज आप किस चुनौती का सामना कर रहे हैं? *",
+        "field.screen_text": "सुरक्षा स्क्रीनिंग पाठ (Text) *",
+        "field.period_days": "विश्लेषण अवधि (दिन)",
+        
+        "journal.text_hint": "खुलकर लिखें। बताएं कि आपको क्या परेशान कर रहा है।",
+        "emo.stressed": "तनावग्रस्त",
+        "emo.anxious": "चिंतित",
+        "emo.tired": "थका हुआ",
+        "emo.calm": "शांत",
+        "emo.happy": "खुश",
+        "emo.lonely": "अकेला",
+        
+        "btn.submit": "अनुरोध सबमिट करें",
+        
+        "result.mood_title": "विश्लेषण परिणाम",
+        "result.journal_title": "सीबीटी विश्लेषण",
+        "result.wellness_title": "कॉपिंग स्ट्रेटेजी कार्ड",
+        "result.crisis_title": "सुरक्षा मूल्यांकन",
+        "result.insights_title": "अंतर्दृष्टि सारांश",
+        
+        "loading": "प्रक्रिया जारी है, कृपया प्रतीक्षा करें...",
+        "err_title": "त्रुटि उत्पन्न हुई",
+        "suggestion_title": "सुझाव"
+      }
+    };
+
+    let CURRENT_LANG = "en";
+
+    // Initialize Page
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check system language
+      const userLang = navigator.language || navigator.userLanguage;
+      if (userLang.startsWith("hi")) {
+        setLanguage("hi");
+      } else {
+        setLanguage("en");
+      }
+    });
+
+    // Language Swapper
+    function setLanguage(lang) {
+      CURRENT_LANG = lang;
+      document.documentElement.lang = lang;
+      
+      // Update toggle buttons ARIA state
+      document.getElementById("lang-en").setAttribute("aria-pressed", lang === "en");
+      document.getElementById("lang-hi").setAttribute("aria-pressed", lang === "hi");
+      
+      // Update titles
+      if (lang === "hi") {
+        document.getElementById("header-title").textContent = "छात्र कल्याण केंद्र";
+        document.getElementById("header-subtitle").textContent = "आत्म-देखभाल और शैक्षणिक सहायता मंच";
+        document.getElementById("skip-link-text").textContent = "मुख्य सामग्री पर जाएं";
+      } else {
+        document.getElementById("header-title").textContent = "Student Wellness Hub";
+        document.getElementById("header-subtitle").textContent = "Self-care & Academic Support Platform";
+        document.getElementById("skip-link-text").textContent = "Skip to content";
+      }
+
+      // Translate all components
+      document.querySelectorAll("[data-i18n]").forEach(elem => {
+        const key = elem.getAttribute("data-i18n");
+        if (TRANSLATIONS[lang][key]) {
+          elem.textContent = TRANSLATIONS[lang][key];
+        }
+      });
+      
+      announceToScreenReader(lang === "hi" ? "भाषा बदलकर हिंदी कर दी गई है।" : "Language switched to English.");
+    }
+
+    // Accessible Announcer (WCAG)
+    function announceToScreenReader(text) {
+      const announcer = document.getElementById("announcer");
+      announcer.textContent = text;
+    }
+
+    // Tab switcher
+    function switchTab(tabId) {
+      // Deactivate all
+      document.querySelectorAll('nav.side-nav button').forEach(btn => {
+        btn.setAttribute("aria-selected", "false");
+        btn.setAttribute("tabindex", "-1");
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Activate selected
+      const targetBtn = document.getElementById(`tab-${tabId}`);
+      targetBtn.setAttribute("aria-selected", "true");
+      targetBtn.setAttribute("tabindex", "0");
+      
+      const targetPanel = document.getElementById(`panel-${tabId}`);
+      targetPanel.classList.add("active");
+      
+      targetBtn.focus();
+      
+      announceToScreenReader(CURRENT_LANG === "hi" ? `टैब लोड हुआ: ${TRANSLATIONS.hi['tab.' + tabId]}` : `Tab selected: ${TRANSLATIONS.en['tab.' + tabId]}`);
+    }
+
+    // Toggle Font Size Accessibility
+    function toggleTextSize() {
+      document.body.classList.toggle("large-text");
+      const isActive = document.body.classList.contains("large-text");
+      announceToScreenReader(isActive ? "Text size increased" : "Text size reset to default");
+    }
+
+    // Toggle Contrast Accessibility
+    function toggleContrast() {
+      document.body.classList.toggle("high-contrast");
+      const isActive = document.body.classList.contains("high-contrast");
+      announceToScreenReader(isActive ? "High contrast mode enabled" : "High contrast mode disabled");
+    }
+
+    // Helper: Show Loading state
+    function showLoading(containerId) {
+      const container = document.getElementById(containerId);
+      container.classList.add("active");
+      
+      const loadingText = TRANSLATIONS[CURRENT_LANG]["loading"];
+      container.querySelector(".result-content").innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.75rem;color:var(--text-muted);">
+          <div style="width:20px;height:20px;border:3px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+          <span>${loadingText}</span>
+        </div>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+      `;
+    }
+
+    // Helper: Render JSON/HTTP Error response programmatically
+    async function handleResponseError(response, containerId) {
+      const container = document.getElementById(containerId);
+      let errorTitle = TRANSLATIONS[CURRENT_LANG]["err_title"];
+      let suggestionTitle = TRANSLATIONS[CURRENT_LANG]["suggestion_title"];
+      
+      let errorMsg = "Network error. Please try again.";
+      let suggestionMsg = "Check your connection or wait a few minutes.";
+      
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.message || errorData.detail || JSON.stringify(errorData);
+        suggestionMsg = errorData.suggestion || "Ensure all form values are valid.";
+      } catch(e) {
+        errorMsg = `HTTP Error ${response.status}: ${response.statusText}`;
+      }
+
+      container.querySelector(".result-content").innerHTML = `
+        <div style="border-left: 4px solid var(--danger); padding-left: 1rem; color: var(--text-main);">
+          <strong style="color:var(--danger); display:block; margin-bottom:0.25rem;">⚠️ ${errorTitle}</strong>
+          <p style="margin-bottom:0.75rem;">${errorMsg}</p>
+          <div style="background:rgba(255,255,255,0.03); border-radius:0.375rem; padding:0.75rem; font-size:0.875rem; color:var(--text-muted);">
+            <strong style="color:var(--warning); display:block; margin-bottom:0.15rem;">💡 ${suggestionTitle}</strong>
+            ${suggestionMsg}
+          </div>
+        </div>
+      `;
+      announceToScreenReader(`Error: ${errorMsg}`);
+    }
+
+    // ─── API Submit: Mood Check-in ───
+    async function submitMood(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      showLoading("result-mood");
+
+      const student_id = document.getElementById("mood-student-id").value;
+      const mood_score = parseInt(form.querySelector("input[name='mood_score']:checked").value);
+      
+      const emotions = [];
+      form.querySelectorAll("input[name='emotions']:checked").forEach(cb => emotions.push(cb.value));
+      
+      const exam_type = document.getElementById("mood-exam-type").value;
+      const days_val = document.getElementById("mood-days").value;
+      const sleep_val = document.getElementById("mood-sleep").value;
+      const note = document.getElementById("mood-note").value;
+
+      const payload = {
+        student_id,
+        mood_score,
+        emotions,
+        exam_type,
+        days_until_exam: days_val ? parseInt(days_val) : null,
+        sleep_hours: sleep_val ? parseFloat(sleep_val) : null,
+        note: note || null
+      };
+
+      try {
+        const res = await fetch("/api/v1/mood/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept-Language": CURRENT_LANG
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          await handleResponseError(res, "result-mood");
+        } else {
+          const data = await res.json();
+          renderMoodResult(data);
+        }
+      } catch (err) {
+        document.getElementById("result-content-mood").textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderMoodResult(data) {
+      const content = document.getElementById("result-content-mood");
+      
+      let riskBadge = `<span class="badge badge-low">${data.risk_level}</span>`;
+      if (data.risk_level === "moderate") riskBadge = `<span class="badge badge-moderate">${data.risk_level}</span>`;
+      else if (data.risk_level === "high") riskBadge = `<span class="badge badge-high">${data.risk_level}</span>`;
+      else if (data.risk_level === "critical") riskBadge = `<span class="badge badge-critical">${data.risk_level}</span>`;
+
+      let recsList = data.recommendations.map(r => `<li>${r}</li>`).join("");
+
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Mood Status</strong>
+            <div style="font-size:1.2rem; font-weight:600; margin-top:0.25rem; display:flex; align-items:center; gap:0.5rem;">
+              <span>${data.mood_label}</span>
+              ${riskBadge}
+            </div>
+          </div>
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">AI Analysis</strong>
+            <p style="margin-top:0.25rem;">${data.analysis}</p>
+          </div>
+          ${data.detected_triggers.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Stress Triggers</strong>
+              <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.35rem;">
+                ${data.detected_triggers.map(t => `<span style="background:rgba(255,255,255,0.05); padding:0.25rem 0.5rem; border-radius:0.25rem; font-size:0.8rem;">${t}</span>`).join("")}
+              </div>
+            </div>
+          ` : ''}
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Recommendations</strong>
+            <ul style="margin-top:0.25rem; padding-left:1.25rem;">
+              ${recsList}
+            </ul>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); border-top:1px solid var(--panel-border); padding-top:0.5rem; display:flex; justify-content:space-between;">
+            <span>Engine: ${data.agent_used}</span>
+            <span>${new Date(data.timestamp).toLocaleString(CURRENT_LANG)}</span>
+          </div>
+        </div>
+      `;
+      announceToScreenReader(`Analysis completed. Mood status detected: ${data.mood_label}. Risk level: ${data.risk_level}`);
+    }
+
+    // ─── API Submit: CBT Journal ───
+    async function submitJournal(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      showLoading("result-journal");
+
+      const student_id = document.getElementById("journal-student-id").value;
+      const exam_type = document.getElementById("journal-exam-type").value;
+      const category = document.getElementById("journal-category").value;
+      const entry_text = document.getElementById("journal-text").value;
+
+      const payload = {
+        student_id,
+        exam_type,
+        entry_text,
+        category: category || null
+      };
+
+      try {
+        const res = await fetch("/api/v1/journal/reflect", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept-Language": CURRENT_LANG
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          await handleResponseError(res, "result-journal");
+        } else {
+          const data = await res.json();
+          renderJournalResult(data);
+        }
+      } catch (err) {
+        document.getElementById("result-content-journal").textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderJournalResult(data) {
+      const content = document.getElementById("result-content-journal");
+      
+      let distortions = data.cognitive_distortions.map(d => `<span style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:var(--danger); padding:0.2rem 0.5rem; border-radius:0.25rem; font-size:0.8rem; font-weight:500;">${d}</span>`).join("");
+      let reframes = data.reframed_thoughts.map(r => `<li style="margin-bottom:0.5rem; background:rgba(16,185,129,0.05); padding:0.5rem 0.75rem; border-radius:0.375rem; border-left:3px solid var(--success);list-style:none;">${r}</li>`).join("");
+      let affirmations = data.affirmations.map(a => `<li style="font-style:italic; margin-bottom:0.25rem;">" ${a} "</li>`).join("");
+
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">CBT Reflection</strong>
+            <p style="margin-top:0.25rem; line-height:1.6;">${data.cbt_reflection}</p>
+          </div>
+          
+          ${data.cognitive_distortions.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; display:block; margin-bottom:0.35rem;">Identified Cognitive Distortions</strong>
+              <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                ${distortions}
+              </div>
+            </div>
+          ` : ''}
+
+          ${data.reframed_thoughts.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Reframed Outlooks</strong>
+              <ul style="margin-top:0.35rem; padding:0;">
+                ${reframes}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${data.affirmations.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Personal Affirmations</strong>
+              <ul style="margin-top:0.25rem; padding-left:1rem; list-style:square; color:var(--accent);">
+                ${affirmations}
+              </ul>
+            </div>
+          ` : ''}
+
+          <div style="font-size:0.75rem; color:var(--text-muted); border-top:1px solid var(--panel-border); padding-top:0.5rem;">
+            <span>Engine: ${data.agent_used}</span>
+          </div>
+        </div>
+      `;
+      announceToScreenReader("CBT reflection completed successfully. Review distortion listings on screen.");
+    }
+
+    // ─── API Submit: Wellness Coach ───
+    async function submitWellness(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      showLoading("result-wellness");
+
+      const student_id = document.getElementById("wellness-student-id").value;
+      const exam_type = document.getElementById("wellness-exam-type").value;
+      const urgency = document.getElementById("wellness-urgency").value;
+      const preferred_technique = document.getElementById("wellness-technique").value;
+      const current_challenge = document.getElementById("wellness-challenge").value;
+
+      const payload = {
+        student_id,
+        exam_type,
+        urgency,
+        preferred_technique,
+        current_challenge
+      };
+
+      try {
+        const res = await fetch("/api/v1/wellness/coach", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept-Language": CURRENT_LANG
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          await handleResponseError(res, "result-wellness");
+        } else {
+          const data = await res.json();
+          renderWellnessResult(data);
+        }
+      } catch (err) {
+        document.getElementById("result-content-wellness").textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderWellnessResult(data) {
+      const content = document.getElementById("result-content-wellness");
+      
+      let techniquesHtml = data.techniques.map(t => `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--panel-border); border-radius:0.375rem; padding:0.75rem; margin-bottom:0.5rem;">
+          <strong style="color:var(--accent); font-size:0.95rem;">${t.name}</strong>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.15rem;">${t.steps.join(" → ")}</p>
+          <span style="font-size:0.75rem; background:rgba(99,102,241,0.1); padding:0.15rem 0.4rem; border-radius:0.25rem; margin-top:0.4rem; display:inline-block;">⏱️ Duration: ${t.duration_minutes}m</span>
+        </div>
+      `).join("");
+
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Coach Message</strong>
+            <p style="margin-top:0.25rem; font-style:italic;">"${data.coach_message}"</p>
+          </div>
+
+          ${data.techniques.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; display:block; margin-bottom:0.5rem;">Coping Techniques</strong>
+              ${techniquesHtml}
+            </div>
+          ` : ''}
+
+          ${data.study_tip ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Study Tip</strong>
+              <p style="margin-top:0.25rem; font-size:0.9rem;">📚 ${data.study_tip}</p>
+            </div>
+          ` : ''}
+
+          ${data.motivational_quote ? `
+            <div style="background:var(--accent-glow); border-radius:0.5rem; padding:1rem; text-align:center;">
+              <p style="font-size:1rem; font-weight:500; color:var(--accent); font-style:italic;">"${data.motivational_quote}"</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      announceToScreenReader("Wellness coach strategy card generated successfully.");
+    }
+
+    // ─── API Submit: Crisis Screening ───
+    async function submitCrisis(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      showLoading("result-crisis");
+
+      const student_id = document.getElementById("crisis-student-id").value;
+      const text = document.getElementById("crisis-text").value;
+
+      const payload = { student_id, text };
+
+      try {
+        const res = await fetch("/api/v1/crisis/screen", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept-Language": CURRENT_LANG
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          await handleResponseError(res, "result-crisis");
+        } else {
+          const data = await res.json();
+          renderCrisisResult(data);
+        }
+      } catch (err) {
+        document.getElementById("result-content-crisis").textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderCrisisResult(data) {
+      const content = document.getElementById("result-content-crisis");
+      
+      let riskBadge = `<span class="badge badge-low">${data.risk_level}</span>`;
+      if (data.risk_level === "moderate") riskBadge = `<span class="badge badge-moderate">${data.risk_level}</span>`;
+      else if (data.risk_level === "high") riskBadge = `<span class="badge badge-high">${data.risk_level}</span>`;
+      else if (data.risk_level === "critical") riskBadge = `<span class="badge badge-critical">${data.risk_level}</span>`;
+
+      let helplinesHtml = data.helpline_numbers.map(h => `
+        <div class="helpline-card">
+          <div class="helpline-name">${h.name}</div>
+          <a class="helpline-num" href="tel:${h.number}">${h.number}</a>
+          <div class="helpline-meta">🕒 ${h.hours} | ${h.type}</div>
+        </div>
+      `).join("");
+
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--panel-border); padding-bottom:0.75rem;">
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Detected Risk Level</strong>
+            ${riskBadge}
+          </div>
+
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Immediate Action Plan</strong>
+            <p style="margin-top:0.25rem; font-weight:500; font-size:1.05rem; color: ${data.risk_level === 'high' || data.risk_level === 'critical' ? 'var(--danger)' : 'var(--text-main)'};">
+              ${data.immediate_action}
+            </p>
+          </div>
+
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Safety Support Message</strong>
+            <p style="margin-top:0.25rem; font-style:italic;">"${data.safety_message}"</p>
+          </div>
+
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Crisis Helpline Directory (India)</strong>
+            <div class="helpline-grid">
+              ${helplinesHtml}
+            </div>
+          </div>
+        </div>
+      `;
+      announceToScreenReader(`Safety check completed. Risk Level detected: ${data.risk_level}. Immediate action required: ${data.immediate_action}`);
+    }
+
+    // ─── API Submit: Insights ───
+    async function submitInsights(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector("button[type='submit']");
+      submitBtn.disabled = true;
+      showLoading("result-insights");
+
+      const student_id = document.getElementById("insights-student-id").value;
+      const exam_type = document.getElementById("insights-exam-type").value;
+      const days = parseInt(document.getElementById("insights-days").value);
+
+      // Generate dummy mock history to test the weekly analytics endpoint
+      const mockHistory = [
+        { "timestamp": "2026-06-01T12:00:00Z", "mood_score": 3, "emotions": ["tired", "anxious"], "note": "Mock test preparation is stressful" },
+        { "timestamp": "2026-06-02T12:00:00Z", "mood_score": 2, "emotions": ["stressed", "anxious"], "note": "Scored poorly on math assignment" },
+        { "timestamp": "2026-06-03T12:00:00Z", "mood_score": 4, "emotions": ["calm", "happy"], "note": "Understood the physics equations today" },
+        { "timestamp": "2026-06-04T12:00:00Z", "mood_score": 3, "emotions": ["tired"], "note": "Late night studying" },
+        { "timestamp": "2026-06-05T12:00:00Z", "mood_score": 4, "emotions": ["calm", "happy"], "note": "Walked in the park, feeling relaxed" }
+      ];
+
+      const payload = {
+        student_id,
+        exam_type,
+        mood_history: mockHistory,
+        analysis_period_days: days
+      };
+
+      try {
+        const res = await fetch("/api/v1/insights/weekly-summary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept-Language": CURRENT_LANG
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          await handleResponseError(res, "result-insights");
+        } else {
+          const data = await res.json();
+          renderInsightsResult(data);
+        }
+      } catch (err) {
+        document.getElementById("result-content-insights").textContent = err.message;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderInsightsResult(data) {
+      const content = document.getElementById("result-content-insights");
+      
+      let trendColor = "var(--text-main)";
+      if (data.trend === "improving") trendColor = "var(--success)";
+      else if (data.trend === "declining") trendColor = "var(--danger)";
+      else if (data.trend === "volatile") trendColor = "var(--warning)";
+
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Mood Trend</strong>
+            <div style="font-size:1.15rem; font-weight:600; color:${trendColor}; text-transform:capitalize; margin-top:0.25rem;">
+              📈 ${data.trend}
+            </div>
+          </div>
+
+          <div>
+            <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">AI Executive Summary</strong>
+            <p style="margin-top:0.25rem; font-size:0.95rem;">${data.summary}</p>
+          </div>
+
+          ${data.top_triggers.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; display:block; margin-bottom:0.25rem;">Top Stress Triggers</strong>
+              <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                ${data.top_triggers.map(t => `<span style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.15); color:var(--danger); padding:0.2rem 0.5rem; border-radius:0.25rem; font-size:0.8rem;">${t}</span>`).join("")}
+              </div>
+            </div>
+          ` : ''}
+
+          ${data.positive_patterns.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; display:block; margin-bottom:0.25rem;">Positive Habits Detected</strong>
+              <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                ${data.positive_patterns.map(p => `<span style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); color:var(--success); padding:0.2rem 0.5rem; border-radius:0.25rem; font-size:0.8rem;">${p}</span>`).join("")}
+              </div>
+            </div>
+          ` : ''}
+
+          ${data.action_plan.length > 0 ? `
+            <div>
+              <strong style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase;">Recommended Action Plan</strong>
+              <ol style="margin-top:0.35rem; padding-left:1.2rem;">
+                ${data.action_plan.map(step => `<li style="margin-bottom:0.35rem; font-size:0.9rem;">${step}</li>`).join("")}
+              </ol>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      announceToScreenReader(`Insights compiled. Trend matches ${data.trend}. Action plan list loaded.`);
+    }
+  </script>
+</body>
+</html>
