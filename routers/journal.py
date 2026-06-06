@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 
 from models.schemas import JournalEntryRequest, JournalReflectionResponse
+from models.errors import ErrorResponse
 from services.agent_registry import ai_invoke, ai_invoke_parallel
 from security.sanitizer import sanitize_text
 from security.logger import get_logger
@@ -20,6 +21,10 @@ settings = get_settings()
     response_model=JournalReflectionResponse,
     status_code=status.HTTP_200_OK,
     summary="CBT reflection on journal entry",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error — entry too short or invalid exam type"},
+        502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
+    },
 )
 async def journal_reflect(entry: JournalEntryRequest) -> JournalReflectionResponse:
     """

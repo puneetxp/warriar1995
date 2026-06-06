@@ -10,6 +10,7 @@ from models.schemas import (
     FullCheckInRequest, FullCheckInResponse,
     MoodAnalysisResponse, JournalReflectionResponse, WellnessResponse, CrisisResponse
 )
+from models.errors import ErrorResponse
 from services.agent_registry import ai_invoke, ai_invoke_parallel
 from security.sanitizer import sanitize_list, sanitize_text
 from security.logger import get_logger
@@ -31,6 +32,10 @@ HELPLINES = [
     response_model=InsightResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate weekly wellness insights",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
+    },
 )
 async def weekly_summary(req: InsightRequest) -> InsightResponse:
     """
@@ -87,6 +92,10 @@ async def weekly_summary(req: InsightRequest) -> InsightResponse:
     response_model=FullCheckInResponse,
     status_code=status.HTTP_200_OK,
     summary="🚀 Full check-in — all agents in parallel",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        502: {"model": ErrorResponse, "description": "Core agent analysis failed"},
+    },
 )
 async def full_checkin(req: FullCheckInRequest) -> FullCheckInResponse:
     """

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 
 from models.schemas import CrisisCheckRequest, CrisisResponse
+from models.errors import ErrorResponse
 from services.agent_registry import ai_invoke
 from security.sanitizer import sanitize_text
 from security.logger import get_logger
@@ -28,6 +29,10 @@ HELPLINES = [
     response_model=CrisisResponse,
     status_code=status.HTTP_200_OK,
     summary="Screen text for mental health crisis signals",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
+    },
 )
 async def crisis_screen(req: CrisisCheckRequest) -> CrisisResponse:
     """

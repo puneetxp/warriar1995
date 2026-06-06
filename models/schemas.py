@@ -3,7 +3,7 @@ Pydantic schemas for request/response models
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -37,7 +37,7 @@ class MoodEntryRequest(BaseModel):
     study_hours_today: Optional[float] = Field(None, ge=0, le=24)
     sleep_hours: Optional[float] = Field(None, ge=0, le=24)
     note: Optional[str] = Field(None, max_length=500)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"json_schema_extra": {"example": {
         "student_id": "stu_001",
@@ -68,7 +68,7 @@ class JournalEntryRequest(BaseModel):
     student_id: str
     entry_text: str = Field(..., min_length=10, max_length=2000)
     exam_type: ExamType
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     model_config = {"json_schema_extra": {"example": {
         "student_id": "stu_001",

@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     # ── Security ──────────────────────────────────────────────────────────────
     ANTHROPIC_API_KEY: str = ""
+    # NOTE: Wildcard is intentional for demo/development. In production, restrict
+    # to specific domains e.g. ["https://your-frontend.com"]
     ALLOWED_ORIGINS: List[str] = ["*"]
     MAX_NOTE_LENGTH: int = 500
     MAX_JOURNAL_LENGTH: int = 2000

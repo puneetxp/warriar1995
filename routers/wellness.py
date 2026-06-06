@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 
 from models.schemas import WellnessRequest, WellnessResponse
+from models.errors import ErrorResponse
 from services.agent_registry import ai_invoke
 from security.sanitizer import sanitize_text
 from security.logger import get_logger
@@ -20,6 +21,10 @@ settings = get_settings()
     response_model=WellnessResponse,
     status_code=status.HTTP_200_OK,
     summary="Get personalized wellness coaching",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
+    },
 )
 async def get_wellness_advice(req: WellnessRequest) -> WellnessResponse:
     """

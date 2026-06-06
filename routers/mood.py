@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 
 from models.schemas import MoodEntryRequest, MoodAnalysisResponse
+from models.errors import ErrorResponse
 from services.agent_registry import ai_invoke, ai_invoke_parallel
 from security.sanitizer import sanitize_list, sanitize_text
 from security.logger import get_logger
@@ -29,6 +30,10 @@ CRISIS_HIGH_LEVELS = {"high", "critical"}
     status_code=status.HTTP_200_OK,
     summary="Analyse mood entry",
     response_description="Emotional analysis, risk level, triggers and recommendations",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error — invalid mood score or exam type"},
+        502: {"model": ErrorResponse, "description": "AI agent failed to respond"},
+    },
 )
 async def analyze_mood(entry: MoodEntryRequest) -> MoodAnalysisResponse:
     """
